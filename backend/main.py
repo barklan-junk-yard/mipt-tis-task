@@ -5,6 +5,15 @@ WARNING: extremely bad code - do not try this at home
 import fastapi as fa
 from fastapi.responses import HTMLResponse
 import databases
+from pydantic import BaseModel
+
+
+def dare(func, *args):
+    try:
+        return func(*args)
+    except:
+        print("No.")
+        return ""
 
 
 app = fa.FastAPI(
@@ -14,18 +23,16 @@ app = fa.FastAPI(
 
 db = databases.Database("sqlite:///./main.db")
 
-
-@app.on_event("startup")
-async def startup():
-    await db.connect()
-
+async def Данные():
     queries = [
         """--sql
         create table if not exists artist (
             id integer primary key autoincrement not null,
             name varchar(255),
             born integer,
-            died integer
+            bornDeltaSeconds integer,
+            died integer,
+            diedDeltaSeconds integer
         );
     """,
         """--sql
@@ -63,8 +70,7 @@ async def startup():
             name varchar(255),
             creationDate integer,
             categoryId integer references category(id),
-            placeId integer references place(id) not null,
-            artistId integer references artist(id) not null
+            placeId integer references place(id) not null
         );
     """,
         """--sql
@@ -72,6 +78,13 @@ async def startup():
             id integer primary key autoincrement not null,
             countryId integer references country(id) not null,
             artistId integer references artist(id) not null
+        );
+    """,
+        """--sql
+        create table if not exists artistItem (
+            id integer primary key autoincrement not null,
+            artistId integer references artist(id) not null,
+            itemId integer references item(id) not null
         );
     """,
     ]
@@ -82,11 +95,12 @@ async def startup():
 
     inserting = [
         "INSERT INTO country(name) VALUES ('United States'), ('United Kingdom')",
-        "insert into artist(name) VALUES ('Elsa'), ('Hector'), ('Laurence')",
-        "insert into artistCountry(countryId, artistId) VALUES (1, 1), (2, 1), (1, 3)",
-        "insert into city(name, countryId) VALUES ('Dallas', 1), ('York', 2)",
-        "insert into place(name, cityId) VALUES ('Some museum in Dallas', 1), ('Some museum in York', 2)",
-        "insert into item(name, placeId, artistId) VALUES ('Black square', 1, 1), ('Yellow square', 2, 1), ('Green square', 1, 2), ('Blue square', 2, 3)",
+        "INSERT INTO artist(name) VALUES ('Elsa'), ('Hector'), ('Laurence')",
+        "INSERT INTO artistCountry(countryId, artistId) VALUES (1, 1), (2, 1), (1, 3)",
+        "INSERT INTO city(name, countryId) VALUES ('Dallas', 1), ('York', 2)",
+        "INSERT INTO place(name, cityId) VALUES ('Some museum in Dallas', 1), ('Some museum in York', 2)",
+        "INSERT INTO item(name, placeId) VALUES ('Black square', 1), ('Yellow square', 2), ('Green square', 1), ('Blue square', 2)",
+        "INSERT INTO artistItem(artistId, itemId) VALUES (1, 1), (2, 1), (1, 3), (3, 2), (3, 1)",
     ]
     for inser in inserting:
         try:
@@ -94,6 +108,12 @@ async def startup():
         except:
             pass
 
+
+@app.on_event("startup")
+async def startup():
+    await db.connect()
+
+    await Данные()
 
 @app.on_event("shutdown")
 async def shutdown():
@@ -103,7 +123,7 @@ async def shutdown():
 api = fa.APIRouter()
 front = fa.APIRouter()
 
-tables = ["artist", "country", "city", "place", "category", "item"]
+tables = ["artist", "country", "city", "place", "category", "item", "artistCountry", "artistItem"]
 
 for table in tables:
     multi_handler = (
@@ -122,13 +142,6 @@ for table in tables:
     )
     exec(id_handler)
 
-    post_handler = (
-        f'@api.post("/{table}")\n'
-        + f"async def post_{table}():\n"
-        + f'\tquery = "INSERT INTO {table}(text, completed) VALUES (:text, :completed);"\n'
-        + '\treturn await db.fetch_one(query=query, values={"id": id})'
-    )
-
     delete_handler = (
         f'@api.delete("/{table}")\n'
         + f"async def delete_{table}(id: int):\n"
@@ -136,6 +149,8 @@ for table in tables:
         + '\tawait db.execute(query=query, values={"id": id})\n'
         + '\treturn "All good"'
     )
+    exec(delete_handler)
+
 
 start = """
 <!DOCTYPE html>
@@ -155,21 +170,28 @@ end = """
 """
 
 
-def content(somehtml):
+def контент(somehtml):
     return start + somehtml + end
 
 
 @app.get("/")
 async def index():
     return HTMLResponse(
-        content(
+        контент(
             """
         <h2><a href="http://127.0.0.1:8000/artist">Artists</a></h2><br>
         <h2><a href="http://127.0.0.1:8000/place">Places</a></h2><br>
         <h2><a href="http://127.0.0.1:8000/item">Items</a></h2>
+        <h2><a href="http://127.0.0.1:8000/form">Open Form</a></h2>
     """
         )
     )
+
+
+@api.post("/reset")
+async def reset():
+    for table in tables:
+        db.execute(f"drop table if exists {table};")
 
 
 async def one(what: str, id):
@@ -186,12 +208,19 @@ async def front23422():
         categoryName = category["name"] if category else ""
         place = await one("place", item["placeId"])
         placeName = place["name"]
-        artist = await one("artist", item["artistId"])
-        artistName = artist["name"]
-        r += f"<br>{item['name']}, creation date: {item['creationDate']}, \
-            place: {placeName}, category: {categoryName}, artist: {artistName}<br>"
 
-    return HTMLResponse(content(r))
+        artistsString = ""
+        artists = await db.fetch_all("SELECT * FROM artistItem;")
+        for row in artists:
+            if row["itemId"] == item["id"]:
+                artistId = row["artistId"]
+                artist = await one("artist", artistId)
+                artistName = artist["name"]
+                artistsString += f"{artistName}, "
+
+        r += f"<br>{item['name']}, creation date: {item['creationDate']}, \
+            place: {placeName}, category: {categoryName}, artist: {artistsString}<br>"
+    return HTMLResponse(контент(r))
 
 
 @front.get("/artist/{id}")
@@ -207,15 +236,62 @@ async def fronts2352a(id: int):
             r += country["name"]
 
     r += "<br><br>Items: <br>"
-    items = await db.fetch_all("SELECT * FROM item;")
+    items = await db.fetch_all("SELECT * FROM artistItem;")
     for row in items:
-        print(row["artistId"])
         if row["artistId"] == id:
-            itemName = row["name"]
+            itemId = row["itemId"]
+            item = await one("item", itemId)
+            itemName = item["name"]
             r += f"{itemName}<br>"
 
-    return HTMLResponse(content(r))
+    return HTMLResponse(контент(r))
 
+
+class Form(BaseModel):
+    query: str
+
+@api.post("/form")
+async def forminputhandler(form: Form):
+    try:
+        await db.execute(form.query)
+        return "Success!"
+    except:
+        return "Failed!"
+
+@front.get("/form")
+async def form():
+    r = """
+    <form action="" id="form">
+        <label for="formi">Type SQL here:</label><br>
+        <input type="text" id="formi">
+    </form>
+    <p id="output"></p>
+    <script defer>
+        function submitfunc(event) {
+            event.preventDefault();
+            var x = document.getElementById("formi").value;
+            const data = { query: x };
+            fetch('http://127.0.0.1:8000/api/form', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            }).then(response => response.json())
+            .then(data => {
+                document.getElementById('output').innerHTML = data;
+                console.log('Success:', data);
+            })
+            .catch((error) => {
+            console.error('Error:', error);
+            });
+        }
+
+        var form = document.getElementById("form");
+        form.addEventListener("submit", submitfunc, true);
+    </script>
+    """
+    return HTMLResponse(контент(r))
 
 @front.get("/place/{id}")
 async def frontsdf2352a(id: int):
@@ -235,7 +311,7 @@ async def frontsdf2352a(id: int):
             itemName = row["name"]
             r += f"{itemName}<br>"
 
-    return HTMLResponse(content(r))
+    return HTMLResponse(контент(r))
 
 
 for sub in ["artist", "place"]:
@@ -249,10 +325,12 @@ for sub in ["artist", "place"]:
         + f'\t\tresp += "<a href=\'http://127.0.0.1:8000/{sub}/"'
         + ' + f"{id}\'>"'
         + ' + f"{name}</a><br>"\n'
-        + f"\treturn HTMLResponse(content(resp))\n"
+        + f"\treturn HTMLResponse(контент(resp))\n"
     )
 
     exec(somepython)
+
+
 
 
 app.include_router(api, prefix="/api")
