@@ -1,0 +1,8 @@
+fastapi
+pydantic
+# sqlalchemy<1.4
+uvicorn
+aiosqlite
+databases[sqlite]
+black
+eralchemy

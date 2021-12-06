@@ -299,13 +299,12 @@ async def index():
     </script>
 
         <h3 style="margin-top: 50px;">Conceptual diagram:</h3>
-        <img style="object-fit: contain; max-width: 110%;" src="http://127.0.0.1:8000/static/concept.png"></img>
+        <img style="object-fit: contain; max-width: 110%;" src="http://127.0.0.1:8000/static/conceptbw.png"></img>
 
         <h3 style="margin-top: 50px;">Logical/Physycal ERD:</h3>
         <img style="object-fit: contain; max-width: 110%;" src="http://127.0.0.1:8000/static/diag.gif"></img>
 
-        <div style="position: fixed; top: 10px; right: 60px;">
-            <hr>
+        <div style="position: fixed; top: 10px; right: 60px; background-color: white; border: 3px solid; padding: 5px; border-radius: 5px;">
             <a href="http://127.0.0.1:8000/static/main.py">Download source code.</a>
         </div
     """
