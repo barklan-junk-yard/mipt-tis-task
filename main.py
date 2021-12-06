@@ -216,10 +216,11 @@ a.before:before,a.after:after{
 #sourcecode {
     position: fixed;
     top: 10px;
-    right: 60px;
-    background-color: white;
+    right: 15%;
+    background-color: LavenderBlush;
     border: 3px solid;
-    padding: 5px;
+    padding: 8px;
+    font-size: 12px;
     border-radius: 5px;
 }
 </style>
@@ -243,6 +244,8 @@ async def index():
     return HTMLResponse(
         контент(
             """
+            <h1>Hey! You're at Ilyana's place.</h1>
+
     <script defer>
         function resetdb() {
             fetch('http://127.0.0.1:8000/api/reset', {
@@ -301,11 +304,11 @@ async def index():
         form.addEventListener("submit", submitfunc, true);
     </script>
 
-        <h3 style="margin-top: 50px;">Conceptual diagram:</h3>
-        <img style="object-fit: contain; max-width: 110%;" src="http://127.0.0.1:8000/static/conceptbw.png"></img>
+        <h3 style="margin-top: 60px;">Conceptual diagram:</h3>
+        <img style="object-fit: contain; max-width: 100%;" src="http://127.0.0.1:8000/static/conceptbw.png"></img>
 
-        <h3 style="margin-top: 50px;">Logical/Physycal ERD:</h3>
-        <img style="object-fit: contain; max-width: 110%;" src="http://127.0.0.1:8000/static/diag.gif"></img>
+        <h3 style="margin-top: 40px;">Logical/Physycal ERD:</h3>
+        <img style="object-fit: contain; max-width: 100%;" src="http://127.0.0.1:8000/static/diag.gif"></img>
 
         <div id="sourcecode">
             <a href="http://127.0.0.1:8000/static/main.py">Download source code.</a>
