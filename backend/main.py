@@ -199,24 +199,42 @@ def content(somehtml):
 @app.get("/")
 async def index():
     return HTMLResponse(content("""
-        <h2><a href="http://127.0.0.1:8000/api/artist">Artists</a></h2><br>
-        <h2><a href="http://127.0.0.1:8000/api/place">Places</a></h2><br>
-        <h2><a href="http://127.0.0.1:8000/api/item">Items</a></h2>
+        <h2><a href="http://127.0.0.1:8000/artist">Artists</a></h2><br>
+        <h2><a href="http://127.0.0.1:8000/place">Places</a></h2><br>
+        <h2><a href="http://127.0.0.1:8000/item">Items</a></h2>
     """))
 
 
-@front.get("/artist")
-async def front324():
-    resp = ""
-    for artist in await db.fetch_all("SELECT * FROM artist;"):
-        id = artist["id"]
-        name = artist["name"]
-        resp += f"<a href='http://127.0.0.1:8000/artist/{id}'>{name}</a><br>"
-    return HTMLResponse(content(resp))
+# @front.get("/artist")
+# async def front324():
+#     resp = ""
+#     for artist in await db.fetch_all("SELECT * FROM artist;"):
+#         id = artist["id"]
+#         name = artist["name"]
+#         resp += f"<a href='http://127.0.0.1:8000/artist/{id}'>{name}</a><br>"
+#     return HTMLResponse(content(resp))
+
 
 async def one(what: str, id):
     query = f"SELECT * FROM {what} WHERE id = :id;"
     return await db.fetch_one(query=query, values={"id": id})
+
+@front.get("/item")
+async def front23422():
+    r = ""
+    items = await db.fetch_all("SELECT * FROM item;")
+    for item in items:
+        category = await one("category", item['categoryId'])
+        categoryName = category['name'] if category else ""
+        place = await one("place", item['placeId'])
+        placeName = place['name']
+        artist = await one("artist", item['artistId'])
+        artistName = artist['name']
+        r += f"<br>{item['name']}, creation date: {item['creationDate']}, \
+            place: {placeName}, category: {categoryName}, artist: {artistName}<br>"
+
+    return HTMLResponse(content(r))
+
 
 @front.get("/artist/{id}")
 async def fronts2352a(id: int):
@@ -236,12 +254,28 @@ async def fronts2352a(id: int):
         print(row["artistId"])
         if row["artistId"] == id:
             itemName = row['name']
-            r += "   "
-            r += f"<a href='http://127.0.0.1:8000/item/{id}'>{itemName}</a><br>"
+            r += f"{itemName}<br>"
 
 
     return HTMLResponse(content(r))
 
+@front.get("/place/{id}")
+async def frontplace23(id: int):
+    # TODO
+    return None
+
+for sub in ["artist", "place"]:
+    somepython = \
+    f'@front.get("/{sub}")\n' \
+    +f'async def frontrere3{sub}():\n' \
+    +f'\tresp = ""\n' \
+    +f'\tfor {sub} in await db.fetch_all("SELECT * FROM {sub};"):\n' \
+    +f'\t\tid = {sub}["id"]\n' \
+    +f'\t\tname = {sub}["name"]\n' \
+    +f'\t\tresp += "<a href=\'http://127.0.0.1:8000/{sub}/"' + ' + f"{id}\'>"' + ' + f"{name}</a><br>"\n' \
+    +f'\treturn HTMLResponse(content(resp))\n'
+
+    exec(somepython)
 
 
 
