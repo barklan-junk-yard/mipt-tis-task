@@ -31,6 +31,7 @@ function _use_local_env {
 
 function up {
     cd backend
+    rm main.db
     uvicorn main:app --reload --host 0.0.0.0 --port 8000 --log-level info
 }
 
