@@ -16,6 +16,7 @@ app = fa.FastAPI(
 
 db = databases.Database("sqlite:///./main.db")
 
+
 async def Данные():
     queries = [
         """--sql
@@ -92,8 +93,8 @@ async def Данные():
         "INSERT INTO artistCountry(countryId, artistId) VALUES (1, 1), (2, 1), (1, 3)",
         "INSERT INTO city(name, countryId) VALUES ('Dallas', 1), ('York', 2)",
         "INSERT INTO place(name, cityId) VALUES ('Some museum in Dallas', 1), ('Some museum in York', 2)",
-        "INSERT INTO item(name, placeId) VALUES ('Black square', 1)," + \
-            " ('Yellow square', 2), ('Green square', 1), ('Blue square', 2)",
+        "INSERT INTO item(name, placeId) VALUES ('Black square', 1),"
+        + " ('Yellow square', 2), ('Green square', 1), ('Blue square', 2)",
         "INSERT INTO artistItem(artistId, itemId) VALUES (1, 1), (2, 1), (1, 3), (3, 2), (3, 1)",
     ]
     for inser in inserting:
@@ -109,6 +110,7 @@ async def startup():
 
     await Данные()
 
+
 @app.on_event("shutdown")
 async def shutdown():
     await db.disconnect()
@@ -117,7 +119,16 @@ async def shutdown():
 api = fa.APIRouter()
 front = fa.APIRouter()
 
-tables = ["artist", "country", "city", "place", "category", "item", "artistCountry", "artistItem"]
+tables = [
+    "artist",
+    "country",
+    "city",
+    "place",
+    "category",
+    "item",
+    "artistCountry",
+    "artistItem",
+]
 
 for table in tables:
     multi_handler = (
@@ -158,8 +169,8 @@ start = """
 <style>
 
 #wrapper {
-  margin: 30px auto; /* center */
-  width: 70%;     /* specify a width! */
+  margin: 30px auto;
+  width: 70%;
 }
 
 .btn {
@@ -385,6 +396,7 @@ async def fronts2352a(id: int):
 class Form(BaseModel):
     query: str
 
+
 @api.post("/form")
 async def forminputhandler(form: Form):
     try:
@@ -392,6 +404,7 @@ async def forminputhandler(form: Form):
         return "Success!"
     except:
         return "Failed!"
+
 
 @front.get("/form")
 async def form():
@@ -427,6 +440,7 @@ async def form():
     </script>
     """
     return HTMLResponse(контент(r))
+
 
 @front.get("/place/{id}")
 async def frontsdf2352a(id: int):
