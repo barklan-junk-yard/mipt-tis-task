@@ -4,42 +4,22 @@ WARNING: extremely bad code - do not try this at home
 
 import fastapi as fa
 from fastapi.responses import HTMLResponse
-from starlette.middleware import cors
 import databases
-
-LOCAL_SETUP = True
-DOMAIN = "localhost"
-PROJECT_NAME = "ilyanaapp"
-# BACKEND_CORS_ORIGINS = [
-#     "*",
-# ]
-DATABASE_URI = "sqlite:///./main.db"
 
 
 app = fa.FastAPI(
-    title=PROJECT_NAME,
-    debug=LOCAL_SETUP,
+    title="ilyanaapp",
+    debug=True,
 )
 
-# if BACKEND_CORS_ORIGINS:
-#     app.add_middleware(
-#         cors.CORSMiddleware,
-#         allow_origins=[str(origin) for origin in BACKEND_CORS_ORIGINS],
-#         allow_credentials=True,
-#         allow_methods=["*"],
-#         allow_headers=["*"],
-#     )
-
-db = databases.Database(DATABASE_URI)
+db = databases.Database("sqlite:///./main.db")
 
 
 @app.on_event("startup")
 async def startup():
     await db.connect()
 
-    queries = []
-
-    queries.append(
+    queries = [
         """--sql
         create table if not exists artist (
             id integer primary key autoincrement not null,
@@ -47,19 +27,13 @@ async def startup():
             born integer,
             died integer
         );
-    """
-    )
-
-    queries.append(
+    """,
         """--sql
         create table if not exists country (
             id integer primary key autoincrement not null,
             name varchar(255) NOT NULL UNIQUE
         );
-    """
-    )
-
-    queries.append(
+    """,
         """--sql
         create table if not exists city (
             id integer primary key autoincrement not null,
@@ -67,10 +41,7 @@ async def startup():
             countryId integer,
             FOREIGN KEY(countryId) REFERENCES country(id)
         );
-    """
-    )
-
-    queries.append(
+    """,
         """--sql
         create table if not exists place (
             id integer primary key autoincrement not null,
@@ -79,19 +50,13 @@ async def startup():
             cityId integer,
             FOREIGN KEY(cityId) REFERENCES city(id)
         );
-    """
-    )
-
-    queries.append(
+    """,
         """--sql
         create table if not exists category (
             id integer primary key autoincrement not null,
             name varchar(255)
         );
-    """
-    )
-
-    queries.append(
+    """,
         """--sql
         create table if not exists item (
             id integer primary key autoincrement not null,
@@ -101,18 +66,15 @@ async def startup():
             placeId integer references place(id) not null,
             artistId integer references artist(id) not null
         );
-    """
-    )
-
-    queries.append(
+    """,
         """--sql
         create table if not exists artistCountry (
             id integer primary key autoincrement not null,
             countryId integer references country(id) not null,
             artistId integer references artist(id) not null
         );
-    """
-    )
+    """,
+    ]
 
     for query in queries:
         print(query)
@@ -192,44 +154,40 @@ end = """
 </html>
 """
 
+
 def content(somehtml):
     return start + somehtml + end
 
 
 @app.get("/")
 async def index():
-    return HTMLResponse(content("""
+    return HTMLResponse(
+        content(
+            """
         <h2><a href="http://127.0.0.1:8000/artist">Artists</a></h2><br>
         <h2><a href="http://127.0.0.1:8000/place">Places</a></h2><br>
         <h2><a href="http://127.0.0.1:8000/item">Items</a></h2>
-    """))
-
-
-# @front.get("/artist")
-# async def front324():
-#     resp = ""
-#     for artist in await db.fetch_all("SELECT * FROM artist;"):
-#         id = artist["id"]
-#         name = artist["name"]
-#         resp += f"<a href='http://127.0.0.1:8000/artist/{id}'>{name}</a><br>"
-#     return HTMLResponse(content(resp))
+    """
+        )
+    )
 
 
 async def one(what: str, id):
     query = f"SELECT * FROM {what} WHERE id = :id;"
     return await db.fetch_one(query=query, values={"id": id})
 
+
 @front.get("/item")
 async def front23422():
     r = ""
     items = await db.fetch_all("SELECT * FROM item;")
     for item in items:
-        category = await one("category", item['categoryId'])
-        categoryName = category['name'] if category else ""
-        place = await one("place", item['placeId'])
-        placeName = place['name']
-        artist = await one("artist", item['artistId'])
-        artistName = artist['name']
+        category = await one("category", item["categoryId"])
+        categoryName = category["name"] if category else ""
+        place = await one("place", item["placeId"])
+        placeName = place["name"]
+        artist = await one("artist", item["artistId"])
+        artistName = artist["name"]
         r += f"<br>{item['name']}, creation date: {item['creationDate']}, \
             place: {placeName}, category: {categoryName}, artist: {artistName}<br>"
 
@@ -253,30 +211,48 @@ async def fronts2352a(id: int):
     for row in items:
         print(row["artistId"])
         if row["artistId"] == id:
-            itemName = row['name']
+            itemName = row["name"]
             r += f"{itemName}<br>"
-
 
     return HTMLResponse(content(r))
 
+
 @front.get("/place/{id}")
-async def frontplace23(id: int):
-    # TODO
-    return None
+async def frontsdf2352a(id: int):
+    r = ""
+    sub = await one("place", id)
+    city = await one("city", sub["cityId"])
+    cityName = city["name"]
+    country = await one("country", city["countryId"])
+    countryName = country["name"]
+
+    r += f'{sub["name"]}, foundation date: {sub["foundationDate"]}, city: {cityName} (country: {countryName})'
+
+    r += "<br><br>Items: <br>"
+    items = await db.fetch_all("SELECT * FROM item;")
+    for row in items:
+        if row["placeId"] == id:
+            itemName = row["name"]
+            r += f"{itemName}<br>"
+
+    return HTMLResponse(content(r))
+
 
 for sub in ["artist", "place"]:
-    somepython = \
-    f'@front.get("/{sub}")\n' \
-    +f'async def frontrere3{sub}():\n' \
-    +f'\tresp = ""\n' \
-    +f'\tfor {sub} in await db.fetch_all("SELECT * FROM {sub};"):\n' \
-    +f'\t\tid = {sub}["id"]\n' \
-    +f'\t\tname = {sub}["name"]\n' \
-    +f'\t\tresp += "<a href=\'http://127.0.0.1:8000/{sub}/"' + ' + f"{id}\'>"' + ' + f"{name}</a><br>"\n' \
-    +f'\treturn HTMLResponse(content(resp))\n'
+    somepython = (
+        f'@front.get("/{sub}")\n'
+        + f"async def frontrere3{sub}():\n"
+        + f'\tresp = ""\n'
+        + f'\tfor {sub} in await db.fetch_all("SELECT * FROM {sub};"):\n'
+        + f'\t\tid = {sub}["id"]\n'
+        + f'\t\tname = {sub}["name"]\n'
+        + f'\t\tresp += "<a href=\'http://127.0.0.1:8000/{sub}/"'
+        + ' + f"{id}\'>"'
+        + ' + f"{name}</a><br>"\n'
+        + f"\treturn HTMLResponse(content(resp))\n"
+    )
 
     exec(somepython)
-
 
 
 app.include_router(api, prefix="/api")
