@@ -1,0 +1,12 @@
+{
+    "tables": [
+        {
+            "tablename": "artist",
+            "columns": [
+                {
+                    "label": ""
+                }
+            ]
+        }
+    ]
+}
