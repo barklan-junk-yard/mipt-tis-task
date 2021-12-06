@@ -30,18 +30,12 @@ function _use_local_env {
 # * General functions.
 
 function up {
-    cd backend
     rm main.db || true
     uvicorn main:app --reload --host 0.0.0.0 --port 8000 --log-level info
 }
 
 function erd {
-    cd backend
     eralchemy -i sqlite:///./main.db -o erd_from_sqlite.pdf
-}
-
-function front {
-    cd frontend && pnpm dev
 }
 
 # -----------------------------------------------------------------------------

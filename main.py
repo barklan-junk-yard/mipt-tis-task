@@ -9,14 +9,6 @@ from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
 
 
-def попробуй(func, *args):
-    try:
-        return func(*args)
-    except:
-        print("No.")
-        return ""
-
-
 app = fa.FastAPI(
     title="ilyanaapp",
     debug=True,
@@ -100,7 +92,8 @@ async def Данные():
         "INSERT INTO artistCountry(countryId, artistId) VALUES (1, 1), (2, 1), (1, 3)",
         "INSERT INTO city(name, countryId) VALUES ('Dallas', 1), ('York', 2)",
         "INSERT INTO place(name, cityId) VALUES ('Some museum in Dallas', 1), ('Some museum in York', 2)",
-        "INSERT INTO item(name, placeId) VALUES ('Black square', 1), ('Yellow square', 2), ('Green square', 1), ('Blue square', 2)",
+        "INSERT INTO item(name, placeId) VALUES ('Black square', 1)," + \
+            " ('Yellow square', 2), ('Green square', 1), ('Blue square', 2)",
         "INSERT INTO artistItem(artistId, itemId) VALUES (1, 1), (2, 1), (1, 3), (3, 2), (3, 1)",
     ]
     for inser in inserting:
@@ -219,6 +212,16 @@ a.before:before,a.after:after{
   width:0;
   background:#d73444;
 }
+
+#sourcecode {
+    position: fixed;
+    top: 10px;
+    right: 60px;
+    background-color: white;
+    border: 3px solid;
+    padding: 5px;
+    border-radius: 5px;
+}
 </style>
 <body>
 <div id="wrapper">
@@ -304,7 +307,7 @@ async def index():
         <h3 style="margin-top: 50px;">Logical/Physycal ERD:</h3>
         <img style="object-fit: contain; max-width: 110%;" src="http://127.0.0.1:8000/static/diag.gif"></img>
 
-        <div style="position: fixed; top: 10px; right: 60px; background-color: white; border: 3px solid; padding: 5px; border-radius: 5px;">
+        <div id="sourcecode">
             <a href="http://127.0.0.1:8000/static/main.py">Download source code.</a>
         </div
     """
