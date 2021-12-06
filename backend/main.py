@@ -6,9 +6,10 @@ import fastapi as fa
 from fastapi.responses import HTMLResponse
 import databases
 from pydantic import BaseModel
+from fastapi.staticfiles import StaticFiles
 
 
-def dare(func, *args):
+def попробуй(func, *args):
     try:
         return func(*args)
     except:
@@ -161,10 +162,70 @@ start = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 </head>
+<style>
+
+#wrapper {
+  margin: 30px auto; /* center */
+  width: 70%;     /* specify a width! */
+}
+
+.btn {
+  padding: 16px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  transition-duration: 0.4s;
+  cursor: pointer;
+  background-color: white;
+  color: black;
+  border: 2px solid #555555;
+}
+
+.btn:hover {
+  background-color: #555555;
+  color: white;
+}
+
+a,a:visited,a:hover,a:active{
+  -webkit-backface-visibility:hidden;
+          backface-visibility:hidden;
+	position:relative;
+  transition:0.5s color ease;
+	text-decoration:none;
+	color:#81b3d2;
+	font-size:1.5em;
+}
+a:hover{
+	color:#d73444;
+}
+a.before:before,a.after:after{
+  content: "";
+  transition:0.5s all ease;
+  -webkit-backface-visibility:hidden;
+          backface-visibility:hidden;
+  position:absolute;
+}
+a.before:before{
+  top:-0.25em;
+}
+a.after:after{
+  bottom:-0.25em;
+}
+a.before:before,a.after:after{
+  height:5px;
+  height:0.35rem;
+  width:0;
+  background:#d73444;
+}
+</style>
 <body>
+<div id="wrapper">
 """
 
 end = """
+</div>
 </body>
 </html>
 """
@@ -179,10 +240,74 @@ async def index():
     return HTMLResponse(
         контент(
             """
-        <h2><a href="http://127.0.0.1:8000/artist">Artists</a></h2><br>
-        <h2><a href="http://127.0.0.1:8000/place">Places</a></h2><br>
+    <script defer>
+        function resetdb() {
+            fetch('http://127.0.0.1:8000/api/reset', {
+                method: 'POST',
+            }).then(response => response.json())
+            .then(data => {
+                document.getElementById('output').innerHTML = data;
+                console.log('Success:', data);
+            })
+            .catch((error) => {
+            console.error('Error:', error);
+            });
+        }
+
+        var form = document.getElementById("form");
+        form.addEventListener("submit", submitfunc, true);
+    </script>
+        <h2><a href="http://127.0.0.1:8000/artist">Artists</a></h2>
+        <h2><a href="http://127.0.0.1:8000/place">Places</a></h2>
         <h2><a href="http://127.0.0.1:8000/item">Items</a></h2>
-        <h2><a href="http://127.0.0.1:8000/form">Open Form</a></h2>
+        <br>
+
+        <div style="display:flex; justify-content:center; gap: 30px;">
+            <button class="btn" onclick="resetdb()">Reset Database</button>
+
+            <form action="" id="form">
+                <label for="formi">Type SQL here:</label><br>
+                <input type="text" id="formi">
+            </form>
+        </div>
+
+
+        <div style="margin: 20px;justify-content:center;display:flex;" id="output"></div>
+    <script defer>
+        function submitfunc(event) {
+            event.preventDefault();
+            var x = document.getElementById("formi").value;
+            const data = { query: x };
+            fetch('http://127.0.0.1:8000/api/form', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            }).then(response => response.json())
+            .then(data => {
+                document.getElementById('output').innerHTML = data;
+                console.log('Success:', data);
+            })
+            .catch((error) => {
+            console.error('Error:', error);
+            });
+        }
+
+        var form = document.getElementById("form");
+        form.addEventListener("submit", submitfunc, true);
+    </script>
+
+        <h3 style="margin-top: 50px;">Conceptual diagram:</h3>
+        <img style="object-fit: contain; max-width: 110%;" src="http://127.0.0.1:8000/static/concept.png"></img>
+
+        <h3 style="margin-top: 50px;">Logical/Physycal ERD:</h3>
+        <img style="object-fit: contain; max-width: 110%;" src="http://127.0.0.1:8000/static/diag.gif"></img>
+
+        <div style="position: fixed; top: 10px; right: 60px;">
+            <hr>
+            <a href="http://127.0.0.1:8000/static/main.py">Download source code.</a>
+        </div
     """
         )
     )
@@ -190,8 +315,13 @@ async def index():
 
 @api.post("/reset")
 async def reset():
-    for table in tables:
-        db.execute(f"drop table if exists {table};")
+    try:
+        for table in tables:
+            await db.execute(f"drop table if exists {table};")
+        await Данные()
+        return "Success!"
+    except:
+        return "Failed!"
 
 
 async def one(what: str, id):
@@ -331,7 +461,7 @@ for sub in ["artist", "place"]:
     exec(somepython)
 
 
-
-
 app.include_router(api, prefix="/api")
 app.include_router(front)
+
+app.mount("/static", StaticFiles(directory="./"), name="static")
