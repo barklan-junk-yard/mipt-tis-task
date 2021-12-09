@@ -30,6 +30,7 @@ function _use_local_env {
 # * General functions.
 
 function up {
+    source env/bin/activate
     rm main.db || true
     uvicorn main:app --reload --host 0.0.0.0 --port 8000 --log-level info
 }

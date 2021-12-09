@@ -14,8 +14,8 @@ app = fa.FastAPI(
     debug=True,
 )
 
-db = databases.Database("sqlite:///./main.db")
 
+db = databases.Database("sqlite:///./main.db")
 
 async def Данные():
     queries = [
@@ -84,7 +84,6 @@ async def Данные():
     ]
 
     for query in queries:
-        print(query)
         await db.execute(query=query)
 
     inserting = [
@@ -130,32 +129,6 @@ tables = [
     "artistItem",
 ]
 
-for table in tables:
-    multi_handler = (
-        f'@api.get("/{table}")\n'
-        + f"async def read_{table}s():\n"
-        + f'\treturn await db.fetch_all("SELECT * FROM {table}")'
-    )
-    exec(multi_handler)
-
-    id_handler = (
-        f'@api.get("/{table}'
-        + '/{id}")\n'
-        + f"async def read_single_{table}(id: int):\n"
-        + f'\tquery = "SELECT * FROM {table} WHERE id = :id;"\n'
-        + '\treturn await db.fetch_one(query=query, values={"id": id})'
-    )
-    exec(id_handler)
-
-    delete_handler = (
-        f'@api.delete("/{table}")\n'
-        + f"async def delete_{table}(id: int):\n"
-        + f'\tquery = "delete from {table} where id = :id;"\n'
-        + '\tawait db.execute(query=query, values={"id": id})\n'
-        + '\treturn "All good"'
-    )
-    exec(delete_handler)
-
 
 start = """
 <!DOCTYPE html>
@@ -164,6 +137,7 @@ start = """
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Document</title>
 </head>
 <style>
@@ -282,10 +256,12 @@ async def index():
         <div style="display:flex; justify-content:center; gap: 30px;">
             <button class="btn" onclick="resetdb()">Reset Database</button>
 
+            <!--
             <form action="" id="form">
                 <label for="formi">Type SQL here:</label><br>
                 <input type="text" id="formi">
             </form>
+            -->
         </div>
 
 
@@ -390,55 +366,6 @@ async def fronts2352a(id: int):
             itemName = item["name"]
             r += f"{itemName}<br>"
 
-    return HTMLResponse(контент(r))
-
-
-class Form(BaseModel):
-    query: str
-
-
-@api.post("/form")
-async def forminputhandler(form: Form):
-    try:
-        await db.execute(form.query)
-        return "Success!"
-    except:
-        return "Failed!"
-
-
-@front.get("/form")
-async def form():
-    r = """
-    <form action="" id="form">
-        <label for="formi">Type SQL here:</label><br>
-        <input type="text" id="formi">
-    </form>
-    <p id="output"></p>
-    <script defer>
-        function submitfunc(event) {
-            event.preventDefault();
-            var x = document.getElementById("formi").value;
-            const data = { query: x };
-            fetch('http://127.0.0.1:8000/api/form', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            }).then(response => response.json())
-            .then(data => {
-                document.getElementById('output').innerHTML = data;
-                console.log('Success:', data);
-            })
-            .catch((error) => {
-            console.error('Error:', error);
-            });
-        }
-
-        var form = document.getElementById("form");
-        form.addEventListener("submit", submitfunc, true);
-    </script>
-    """
     return HTMLResponse(контент(r))
 
 
