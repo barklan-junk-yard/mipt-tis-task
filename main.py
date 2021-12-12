@@ -1,23 +1,16 @@
-"""
-WARNING: extremely bad code - do not try this at home
-"""
-
 import fastapi as fa
 from fastapi.responses import HTMLResponse
 import databases
-from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
-
 
 app = fa.FastAPI(
     title="ilyanaapp",
     debug=True,
 )
 
-
 db = databases.Database("sqlite:///./main.db")
 
-async def Данные():
+async def dbdata():
     queries = [
         """--sql
         create table if not exists artist (
@@ -107,7 +100,7 @@ async def Данные():
 async def startup():
     await db.connect()
 
-    await Данные()
+    await dbdata()
 
 
 @app.on_event("shutdown")
@@ -220,14 +213,14 @@ end = """
 """
 
 
-def контент(somehtml):
+def content(somehtml):
     return start + somehtml + end
 
 
 @app.get("/")
 async def index():
     return HTMLResponse(
-        контент(
+        content(
             """
             <h1>Hey! You're at Ilyana's place.</h1>
 
@@ -245,8 +238,6 @@ async def index():
             });
         }
 
-        var form = document.getElementById("form");
-        form.addEventListener("submit", submitfunc, true);
     </script>
         <h2><a href="http://127.0.0.1:8000/artist">Artists</a></h2>
         <h2><a href="http://127.0.0.1:8000/place">Places</a></h2>
@@ -266,30 +257,6 @@ async def index():
 
 
         <div style="margin: 20px;justify-content:center;display:flex;" id="output"></div>
-    <script defer>
-        function submitfunc(event) {
-            event.preventDefault();
-            var x = document.getElementById("formi").value;
-            const data = { query: x };
-            fetch('http://127.0.0.1:8000/api/form', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data),
-            }).then(response => response.json())
-            .then(data => {
-                document.getElementById('output').innerHTML = data;
-                console.log('Success:', data);
-            })
-            .catch((error) => {
-            console.error('Error:', error);
-            });
-        }
-
-        var form = document.getElementById("form");
-        form.addEventListener("submit", submitfunc, true);
-    </script>
 
         <h3 style="margin-top: 60px;">Conceptual diagram:</h3>
         <img style="object-fit: contain; max-width: 100%;" src="http://127.0.0.1:8000/static/conceptbw.png"></img>
@@ -310,7 +277,7 @@ async def reset():
     try:
         for table in tables:
             await db.execute(f"drop table if exists {table};")
-        await Данные()
+        await dbdata()
         return "Success!"
     except:
         return "Failed!"
@@ -342,7 +309,7 @@ async def front23422():
 
         r += f"<br>{item['name']}, creation date: {item['creationDate']}, \
             place: {placeName}, category: {categoryName}, artist: {artistsString}<br>"
-    return HTMLResponse(контент(r))
+    return HTMLResponse(content(r))
 
 
 @front.get("/artist/{id}")
@@ -366,7 +333,7 @@ async def fronts2352a(id: int):
             itemName = item["name"]
             r += f"{itemName}<br>"
 
-    return HTMLResponse(контент(r))
+    return HTMLResponse(content(r))
 
 
 @front.get("/place/{id}")
@@ -387,7 +354,7 @@ async def frontsdf2352a(id: int):
             itemName = row["name"]
             r += f"{itemName}<br>"
 
-    return HTMLResponse(контент(r))
+    return HTMLResponse(content(r))
 
 
 for sub in ["artist", "place"]:
@@ -401,7 +368,7 @@ for sub in ["artist", "place"]:
         + f'\t\tresp += "<a href=\'http://127.0.0.1:8000/{sub}/"'
         + ' + f"{id}\'>"'
         + ' + f"{name}</a><br>"\n'
-        + f"\treturn HTMLResponse(контент(resp))\n"
+        + f"\treturn HTMLResponse(content(resp))\n"
     )
 
     exec(somepython)
